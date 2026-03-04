@@ -159,6 +159,13 @@ This captures recovery quality — a dimension not measured in standard chat ben
 
 ---
 
+## Project layout
+
+- **`src/backend/`** — FastAPI app, SQLModel/SQLite, transcript builder, Phase 1 REST API. Run from here: `uvicorn app.main:app`, tests: `pytest`.
+- **`src/frontend/`** — React + Vite + TypeScript UI (tree view, conversation list). Run from here: `npm install && npm run dev`.
+
+---
+
 ## Architecture (Phase 1)
 
 User Input  

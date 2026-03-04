@@ -1,0 +1,425 @@
+:root {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
+    "Apple Color Emoji", "Segoe UI Emoji";
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 320px 6px 1fr 6px 480px;
+  gap: 0;
+  padding: 12px;
+}
+
+.resizeHandle {
+  background: #e2e8f0;
+  flex-shrink: 0;
+  position: relative;
+}
+.resizeHandle:hover {
+  background: #94a3b8;
+}
+.resizeHandle:active {
+  background: #64748b;
+}
+.resizeHandleVertical {
+  width: 6px;
+  min-width: 6px;
+  cursor: col-resize;
+  margin: 0 -3px;
+  z-index: 1;
+}
+.resizeHandleHorizontal {
+  height: 6px;
+  min-height: 6px;
+  cursor: row-resize;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panelHeader {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.panelBody {
+  padding: 12px;
+  overflow: auto;
+  min-height: 0;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+textarea.inputError,
+input.inputError {
+  border-color: #dc2626;
+  outline: 2px solid #dc2626;
+  outline-offset: 0;
+}
+
+button {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+button.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.listItem {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.listItemActive {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.listItemDisabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.banner {
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal {
+  width: min(720px, 100%);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.modalHeader {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+}
+
+.modalBody {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modalFooter {
+  padding: 12px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Thread view (root → active path, chat-style) */
+.threadView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.threadViewHeader {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.threadScroll {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+.threadBlock {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  max-width: 88%;
+  width: max-content;
+  min-width: 0;
+}
+.threadBlock.user {
+  align-self: flex-start;
+}
+.threadBlock.llm {
+  align-self: flex-end;
+}
+.threadBlock.authorUser {
+  background: #eff6ff;
+}
+.threadBlock.authorAgentTool {
+  background: #ecfdf5;
+}
+.threadBlock.authorOther {
+  background: #f8fafc;
+}
+.threadBlock:hover {
+  border-color: #cbd5e1;
+}
+.threadBlock.authorUser:hover {
+  background: #dbeafe;
+}
+.threadBlock.authorAgentTool:hover {
+  background: #d1fae5;
+}
+.threadBlock.authorOther:hover {
+  background: #f1f5f9;
+}
+.threadBlock.selected {
+  border-color: #2563eb;
+}
+.threadBlock.authorUser.selected {
+  background: #dbeafe;
+}
+.threadBlock.authorAgentTool.selected {
+  background: #a7f3d0;
+}
+.threadBlock.authorOther.selected {
+  background: #e2e8f0;
+}
+.threadBlockHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.threadBlockContent {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.4;
+}
+.threadBlockNotes {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.threadNote {
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #94a3b8;
+}
+.badge.noteIndicator {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+/* Details pane: only message content scrolls; footer (buttons, NOTES) stays visible */
+.detailPane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  flex: 1;
+}
+.detailPaneScroll {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.detailPaneMessageContent {
+  white-space: pre-wrap;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+  overflow-x: auto;
+}
+.detailPaneFooter {
+  flex-shrink: 0;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Inline switch panel (tree stays visible above in the same column) */
+.switchPanel {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f8fafc;
+}
+.switchPanelHeader {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 700;
+  background: #fff;
+}
+.switchPanelBody {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.switchPanelFooter {
+  padding: 12px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #fff;
+}
+
+.debugToggle {
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.debugToggle:hover {
+  border-color: #cbd5e1;
+}
+.debugToggle input {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+.threadBlockPending {
+  opacity: 0.95;
+}
+
+.threadBlockWaiting .threadBlockWaitingDots {
+  display: inline-flex;
+  gap: 2px;
+  min-height: 1.4em;
+}
+
+.threadBlockWaitingDots .dot {
+  animation: threadDot 1.4s ease-in-out infinite both;
+}
+
+.threadBlockWaitingDots .dot:nth-child(1) { animation-delay: 0s; }
+.threadBlockWaitingDots .dot:nth-child(2) { animation-delay: 0.2s; }
+.threadBlockWaitingDots .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes threadDot {
+  0%, 80%, 100% { opacity: 0.3; }
+  40% { opacity: 1; }
+}
+

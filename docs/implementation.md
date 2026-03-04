@@ -270,7 +270,7 @@ Behavior:
   - parent_id = root message id
 6. Create active_state entry:
   - conversation_id = conversation_id
-  - ctive_message_id = llm reply id
+  - active_message_id = llm reply id
   - needs_context_rebuild = False
 
 Returns:
@@ -288,14 +288,19 @@ Behavior:
 ### POST /conversations/{id}/notes
 
 Body: {
-  message_id, 
-  content: string, 
+  message_id,
+  content: string,
   author?: string
 }
+
 Behavior:
 
 - create note attached to message_id
 - needs_context_rebuild = True
+
+Returns (so the frontend can patch the tree without GET /tree):
+
+- note_id, message_id, author, content, created_at (ISO datetime string)
 
 ### POST /conversations/{id}/checkpoints
 
@@ -308,9 +313,13 @@ Behavior:
 ### POST /conversations/{id}/message
 
 Body: {
-  content: string, 
-  author?: string
+  content: string,
+  author?: string,
+  transcript: string
 }
+
+The client sends the transcript it will use (either rebuilt from tree when needs_context_rebuild, or cached transcript + new user block).
+
 Behavior:
 
 1. Validate active node exists and role == `llm`. If not, return 400.
@@ -325,13 +334,19 @@ Behavior:
 6. Append llm reply as child of user message.
 7. Append llm reply to the transcript.
 
-Return: 
-- new messages ids.
-- llm reply.
+Returns (so the frontend can patch the tree without GET /tree):
+
+- user_message_id, llm_message_id
+- llm_content, append_chunk (transcript suffix to append)
+- user_created_at, llm_created_at (ISO datetime strings)
 
 ### GET /conversations/{id}/transcript
 
 Returns the transcript for root→active path (debug endpoint).
+
+### Client tree updates (frontend)
+
+The frontend keeps a local copy of the tree. After **send message**, **add note**, **set active**, or **set message title**, it patches the tree in state using the API response and does **not** call GET /tree. GET /tree is used only when **selecting a conversation** (load or switch). The response shapes above (created_at and note fields) are defined so the client can patch correctly.
 
 ---
 
@@ -373,8 +388,10 @@ When using AI tools to generate code:
 - Do not add DB triggers/check constraints in Phase 1.
 - Keep endpoints minimal; avoid premature abstractions.
 - Add tests for:
-  - path + LCA
-  - branch-from-LLM enforcement
-  - transcript NOTE injection
-  - rebuild-flag defer semantics
+  - path + LCA (`test_crud_and_transcript`)
+  - branch-from-LLM enforcement (API: POST /message returns 400 when active is not LLM; `test_api`)
+  - transcript NOTE injection (`test_crud_and_transcript`)
+  - rebuild-flag defer semantics (API: set active sets `needs_context_rebuild = True`; `test_api`)
+  - API response shapes for client tree-patching: POST /message returns `user_created_at`, `llm_created_at`; POST /notes returns `note_id`, `message_id`, `author`, `content`, `created_at` (`test_api`)
+- Optional: frontend unit tests for tree-patch helpers (patchTreeAfterSend, patchTreeAfterNote, etc.) and for “waiting for LLM” disabling switch/create/note/title.
 
