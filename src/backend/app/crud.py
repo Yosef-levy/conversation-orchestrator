@@ -16,8 +16,34 @@ def get_conversation(session: Session, conversation_id: UUID) -> Conversation:
 
 
 def list_conversations(session: Session) -> List[Conversation]:
-    stmt = select(Conversation).order_by(Conversation.updated_at.desc())
+    # Pinned first, then by most recently updated
+    stmt = select(Conversation).order_by(
+        Conversation.pinned.desc(),
+        Conversation.updated_at.desc(),
+    )
     return list(session.exec(stmt))
+
+
+def set_conversation_pinned(session: Session, conversation_id: UUID, pinned: bool) -> None:
+    conversation = get_conversation(session, conversation_id)
+    conversation.pinned = pinned
+    session.add(conversation)
+
+
+def delete_conversation(session: Session, conversation_id: UUID) -> None:
+    """Delete a conversation and its messages, notes, and active state."""
+    conversation = get_conversation(session, conversation_id)
+    # Delete dependent rows (order matters for FKs)
+    stmt_notes = select(Note).join(Message).where(Message.conversation_id == conversation_id)
+    for note in session.exec(stmt_notes):
+        session.delete(note)
+    stmt_messages = select(Message).where(Message.conversation_id == conversation_id)
+    for message in session.exec(stmt_messages):
+        session.delete(message)
+    state = session.get(ActiveState, conversation_id)
+    if state is not None:
+        session.delete(state)
+    session.delete(conversation)
 
 
 def get_active_state(session: Session, conversation_id: UUID) -> ActiveState:

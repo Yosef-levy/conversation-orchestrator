@@ -114,5 +114,22 @@ export const api = {
   getTranscript(conversationId: UUID): Promise<{ transcript: string }> {
     return http<{ transcript: string }>(`/conversations/${conversationId}/transcript`);
   },
+
+  getTranscriptHeaderStatic(): Promise<{ static_part: string }> {
+    return http<{ static_part: string }>("/config/transcript-header");
+  },
+
+  deleteConversation(conversationId: UUID): Promise<{ status: string }> {
+    return http<{ status: string }>(`/conversations/${conversationId}`, {
+      method: "DELETE",
+    });
+  },
+
+  setConversationPinned(conversationId: UUID, pinned: boolean): Promise<{ status: string }> {
+    return http<{ status: string }>(`/conversations/${conversationId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ pinned }),
+    });
+  },
 };
 

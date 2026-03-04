@@ -3,6 +3,7 @@ export type UUID = string;
 export type ConversationSummary = {
   id: UUID;
   title: string | null;
+  pinned: boolean;
   created_at: string;
   updated_at: string;
 };

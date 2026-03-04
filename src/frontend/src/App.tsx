@@ -40,6 +40,8 @@ export default function App() {
   const [noteHostFromTree, setNoteHostFromTree] = useState<UUID | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [cachedTranscript, setCachedTranscript] = useState<string | null>(null);
+  /** Static part of transcript header from GET /config/transcript-header (single source of truth). */
+  const [transcriptHeaderStatic, setTranscriptHeaderStatic] = useState<string | null>(null);
 
   // Resizable layout (persisted to localStorage)
   const [leftPanelWidth, setLeftPanelWidth] = useState(() => {
@@ -128,6 +130,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    api.getTranscriptHeaderStatic().then(
+      (r) => setTranscriptHeaderStatic(r.static_part),
+      () => { /* use fallback in transcript.ts */ }
+    );
+  }, []);
+
+  useEffect(() => {
     if (!selectedConversationId) {
       setTree(null);
       setSelectedMessageId(null);
@@ -141,10 +150,10 @@ export default function App() {
     refreshTree(id)
       .then((t) => {
         setScrollThreadToEndTrigger((n) => n + 1);
-        setCachedTranscript(buildTranscriptFromTree(t));
+        setCachedTranscript(buildTranscriptFromTree(t, transcriptHeaderStatic));
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
-  }, [selectedConversationId]);
+  }, [selectedConversationId, transcriptHeaderStatic]);
 
   const activeMessage = useMemo(() => {
     if (!tree) return null;
@@ -224,7 +233,7 @@ export default function App() {
     setError(null);
     setBusy(true);
     try {
-      const transcript = buildInitialTranscript(title || null, firstMessage);
+      const transcript = buildInitialTranscript(title || null, firstMessage, transcriptHeaderStatic);
       const res = await api.createConversation({
         title: title || undefined,
         message: firstMessage,
@@ -305,7 +314,7 @@ export default function App() {
       if (tree.active_state.needs_context_rebuild) {
         const freshTree = await api.getTree(selectedConversationId);
         setTree(freshTree);
-        const built = buildTranscriptFromTree(freshTree);
+        const built = buildTranscriptFromTree(freshTree, transcriptHeaderStatic);
         setCachedTranscript(built);
         transcriptToSend = appendUserBlock(built, text, "end_user");
       } else {
@@ -361,6 +370,28 @@ export default function App() {
               selectedId={selectedConversationId}
               onSelect={(id) => setSelectedConversationId(id)}
               selectionDisabled={waitingForLlm}
+              onDelete={async (id) => {
+                try {
+                  await api.deleteConversation(id);
+                  await refreshConversations();
+                  if (selectedConversationId === id) {
+                    setSelectedConversationId(null);
+                    setTree(null);
+                    setSelectedMessageId(null);
+                    setCachedTranscript(null);
+                  }
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : String(e));
+                }
+              }}
+              onPin={async (id, pinned) => {
+                try {
+                  await api.setConversationPinned(id, pinned);
+                  await refreshConversations();
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : String(e));
+                }
+              }}
             />
           </div>
           {debugMode ? (

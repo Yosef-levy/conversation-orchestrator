@@ -164,6 +164,32 @@ This captures recovery quality — a dimension not measured in standard chat ben
 - **`src/backend/`** — FastAPI app, SQLModel/SQLite, transcript builder, Phase 1 REST API. Run from here: `uvicorn app.main:app`, tests: `pytest`.
 - **`src/frontend/`** — React + Vite + TypeScript UI (tree view, conversation list). Run from here: `npm install && npm run dev`.
 
+### Running with vLLM (e.g. Qwen2.5-14B)
+
+By default the backend uses a **stub** LLM (echo). To use a real model without per-token cost, run **vLLM** locally and point the backend at it.
+
+1. **Start vLLM** on port **8001** (so the backend can keep using 8000). For **24GB VRAM** use the AWQ-quantized model (full-precision 14B needs ~28GB and leaves no room for the KV cache):
+
+   ```bash
+   pip install vllm
+   vllm serve Qwen/Qwen2.5-14B-Instruct-AWQ --port 8001
+   ```
+
+   For 32GB+ VRAM you can use full precision: `vllm serve Qwen/Qwen2.5-14B-Instruct --dtype auto --port 8001`
+
+2. **Configure the backend** (in `src/backend/.env` or env):
+
+   ```bash
+   LLM_PROVIDER=vllm
+   LLM_VLLM_BASE_URL=http://localhost:8001
+   LLM_VLLM_MODEL=Qwen/Qwen2.5-14B-Instruct-AWQ
+   LLM_MAX_TOKENS=2048
+   ```
+
+3. Start the backend and frontend as usual. The orchestrator will call vLLM’s OpenAI-compatible `/v1/completions` endpoint with the full transcript as the prompt.
+
+   **Conda/mamba:** Use the repo’s `environment.yml` (includes `vllm`). Create the env, then run `vllm serve Qwen/Qwen2.5-14B-Instruct-AWQ --port 8001` (or full-precision 14B if you have 32GB+). See comments in `environment.yml`.
+
 ---
 
 ## Architecture (Phase 1)

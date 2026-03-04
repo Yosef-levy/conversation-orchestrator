@@ -13,6 +13,7 @@ from .models import Conversation, Message, Note, ActiveState
 from .schemas import (
     ActiveStateResponse,
     ConversationCreate,
+    ConversationPatch,
     ConversationSummary,
     ConversationTreeResponse,
     MessageNode,
@@ -24,11 +25,17 @@ from .schemas import (
     UserMessageCreateRequest,
     UserMessageResponse,
 )
-from .transcript import build_transcript_for_path, serialize_message_block
+from .transcript import build_transcript_for_path, get_transcript_header_static, serialize_message_block
 
 
 router = APIRouter()
 llm_client = LLMClient()
+
+
+@router.get("/config/transcript-header")
+def get_transcript_header_config():
+    """Return the static part of the transcript header (single source of truth for BE and FE)."""
+    return {"static_part": get_transcript_header_static()}
 
 
 @router.get("/conversations", response_model=List[ConversationSummary])
@@ -52,6 +59,7 @@ def list_conversations(
             ConversationSummary(
                 id=_id,
                 title=c.title,
+                pinned=getattr(c, "pinned", False),
                 created_at=_created,
                 updated_at=_updated,
             )
@@ -104,6 +112,33 @@ async def create_conversation(
     session.commit()
 
     return {"conversation_id": conversation.id}
+
+
+@router.delete("/conversations/{conversation_id}")
+def delete_conversation(
+    conversation_id: str, session: Session = Depends(get_session)
+):
+    from uuid import UUID
+
+    conv_id = UUID(conversation_id)
+    crud.delete_conversation(session, conv_id)
+    session.commit()
+    return {"status": "deleted"}
+
+
+@router.patch("/conversations/{conversation_id}")
+def patch_conversation(
+    conversation_id: str,
+    body: ConversationPatch,
+    session: Session = Depends(get_session),
+):
+    from uuid import UUID
+
+    conv_id = UUID(conversation_id)
+    if body.pinned is not None:
+        crud.set_conversation_pinned(session, conv_id, body.pinned)
+    session.commit()
+    return {"status": "ok"}
 
 
 @router.get("/conversations/{conversation_id}/tree", response_model=ConversationTreeResponse)

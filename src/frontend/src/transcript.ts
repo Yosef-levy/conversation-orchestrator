@@ -18,24 +18,27 @@ function escapeWrappers(text: string): string {
     .replace(/<<<END NOTE>>>/g, "<< <END NOTE>>");
 }
 
-function buildHeader(conversationTitle: string | null): string {
+/** Fallback when config has not been fetched yet (must match backend default). */
+const FALLBACK_HEADER_STATIC = [
+  "You are given a structured conversation transcript.",
+  "",
+  "The transcript consists of:",
+  "- <<<USER>>> blocks (user messages)",
+  "- <<<LLM>>> blocks (assistant responses)",
+  "- <<<NOTE>>> blocks (user-authored state notes)",
+  "",
+  "NOTES are contextual clarifications or decisions and must be treated as part of the conversation state.",
+  "",
+  "Continue the conversation by responding as the LLM.",
+  "Output only your next single reply (plain text). Do not reproduce wrapper tags.",
+  "Do not output further USER, NOTE, or LLM turns—only one assistant reply.",
+  "",
+].join("\n");
+
+function buildHeader(conversationTitle: string | null, headerStatic: string | null): string {
   const title = conversationTitle?.trim() || "Conversation";
-  return [
-    title,
-    "",
-    "You are given a structured conversation transcript.",
-    "",
-    "The transcript consists of:",
-    "- <<<USER>>> blocks (user messages)",
-    "- <<<LLM>>> blocks (assistant responses)",
-    "- <<<NOTE>>> blocks (user-authored state notes)",
-    "",
-    "NOTES are contextual clarifications or decisions and must be treated as part of the conversation state.",
-    "",
-    "Continue the conversation by responding as the LLM.",
-    "Do not reproduce wrapper tags in your response.",
-    "",
-  ].join("\n");
+  const staticPart = headerStatic ?? FALLBACK_HEADER_STATIC;
+  return `${title}\n\n${staticPart}`;
 }
 
 function serializeMessageBlock(message: MessageNode, notes: NoteItem[]): string {
@@ -54,11 +57,15 @@ function serializeMessageBlock(message: MessageNode, notes: NoteItem[]): string 
 /**
  * Build full transcript for root→active path from tree (messages + notes).
  * Used when loading a conversation or when needs_context_rebuild (refetch tree then build).
+ * headerStatic: from GET /config/transcript-header (null = use fallback).
  */
-export function buildTranscriptFromTree(tree: ConversationTreeResponse): string {
+export function buildTranscriptFromTree(
+  tree: ConversationTreeResponse,
+  headerStatic: string | null = null
+): string {
   const path = pathFromRoot(tree.messages, tree.active_state.active_message_id);
   const title = tree.conversation_title ?? null;
-  const header = buildHeader(title);
+  const header = buildHeader(title, headerStatic);
   const blocks: string[] = [header];
   for (const msg of path) {
     const notes = tree.notes[msg.id] ?? [];
@@ -69,12 +76,14 @@ export function buildTranscriptFromTree(tree: ConversationTreeResponse): string 
 
 /**
  * Build initial transcript for create conversation: header + first user block.
+ * headerStatic: from GET /config/transcript-header (null = use fallback).
  */
 export function buildInitialTranscript(
   conversationTitle: string | null,
-  firstMessageContent: string
+  firstMessageContent: string,
+  headerStatic: string | null = null
 ): string {
-  const header = buildHeader(conversationTitle);
+  const header = buildHeader(conversationTitle, headerStatic);
   const userBlock = [
     WRAPPER_USER_START,
     escapeWrappers(firstMessageContent),

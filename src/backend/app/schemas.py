@@ -10,6 +10,7 @@ from pydantic import BaseModel
 class ConversationSummary(BaseModel):
     id: UUID
     title: Optional[str]
+    pinned: bool = False
     created_at: datetime
     updated_at: datetime
 
@@ -19,6 +20,10 @@ class ConversationCreate(BaseModel):
     author: Optional[str] = None
     title: Optional[str] = None
     transcript: str  # Frontend-built: header + first user block, used for initial LLM call
+
+
+class ConversationPatch(BaseModel):
+    pinned: Optional[bool] = None
 
 
 class ActiveStateResponse(BaseModel):

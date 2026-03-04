@@ -17,7 +17,13 @@ class Settings(BaseSettings):
     app_name: str = "Conversation Orchestrator"
     database_url: str = DEFAULT_DATABASE_URL
 
+    # LLM: "stub" (echo, for tests) or "vllm" (vLLM OpenAI-compatible server).
+    llm_provider: str = "stub"
     llm_model_name: str = "stub-echo"
+    # vLLM server (use port 8001 if backend uses 8000).
+    llm_vllm_base_url: str = "http://localhost:8001"
+    llm_vllm_model: str = "Qwen/Qwen2.5-14B-Instruct-AWQ"
+    llm_max_tokens: int = 2048
 
 
 @lru_cache(maxsize=1)
