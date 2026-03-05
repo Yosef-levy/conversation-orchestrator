@@ -1,0 +1,39 @@
+# Dev stack: backend + vLLM. Use with scripts/start.sh and scripts/stop.sh.
+# Requires: Docker with GPU support (nvidia-container-toolkit) for vLLM.
+# Backend uses host network so it can reach vLLM at localhost:8001 (avoids DNS resolution issues in WSL2).
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    working_dir: /workspace/src/backend
+    volumes:
+      - .:/workspace
+    network_mode: host
+    environment:
+      - LLM_PROVIDER=vllm
+      - LLM_VLLM_BASE_URL=http://localhost:8001
+      - LLM_VLLM_MODEL=Qwen/Qwen2.5-14B-Instruct-AWQ
+      - LLM_MAX_TOKENS=2048
+    depends_on:
+      - vllm
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  vllm:
+    image: vllm/vllm-openai:latest
+    command: ["--model", "Qwen/Qwen2.5-14B-Instruct-AWQ"]
+    ports:
+      - "8001:8000"
+    ipc: host
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  huggingface_cache:

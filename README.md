@@ -190,6 +190,17 @@ By default the backend uses a **stub** LLM (echo). To use a real model without p
 
    **Conda/mamba:** Use the repo’s `environment.yml` (includes `vllm`). Create the env, then run `vllm serve Qwen/Qwen2.5-14B-Instruct-AWQ --port 8001` (or full-precision 14B if you have 32GB+). See comments in `environment.yml`.
 
+### One-command dev stack (Docker + frontend)
+
+To start backend, vLLM, and frontend with one command (and stop them with another):
+
+```bash
+./scripts/start.sh   # starts Docker (backend + vLLM), frontend dev server, opens browser
+./scripts/stop.sh    # stops frontend and Docker services
+```
+
+Requires Docker with GPU support (nvidia-container-toolkit) for vLLM. Uses `docker-compose.dev.yml` and `Dockerfile.backend`. To start only the frontend (e.g. backend/vLLM already running): `SKIP_DOCKER=1 ./scripts/start.sh`. To stop only the frontend: `SKIP_DOCKER=1 ./scripts/stop.sh`.
+
 ---
 
 ## Architecture (Phase 1)
